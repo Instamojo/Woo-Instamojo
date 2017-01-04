@@ -3,8 +3,8 @@ Contributors: instamojo, lubus
 Donate link: https://www.instamojo.com/
 Tags: commerce, e-commerce, ecommerce, online store, sell digital downloads, sell online, shop, store, wordpress ecommerce, WordPress shopping cart, sell event tickets, sell subscriptions, sell memberships, sell physical goods, payments, easy payments, payments button, widget
 Requires at least: 3.3
-Tested up to: 4.6.1
-Stable tag: 1.0.2
+Tested up to: 4.7
+Stable tag: 1.0.4
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
@@ -52,6 +52,14 @@ Inside `wc-logs` there’s going to be file whose name starts with `instamojo`.
 4. Checkout screen when using Instamojo Payment Gateway for WooCommerce.
 
 == Changelog ==
+
+= 1.0.4 =
+
+* Updated supported WordPress version to 4.7.
+
+= 1.0.3 =
+
+* Better error messages(with links) and logging. 
 
 = 1.0.2 =
 

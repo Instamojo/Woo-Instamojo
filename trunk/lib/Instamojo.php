@@ -47,9 +47,9 @@ Class Instamojo
 			$result = json_decode($result);
 			if(isset($result->error))
 			{
-				throw new ValidationException("The Authorization request failed with message '$result->error'",array("Payment Gateway Authorization Failed."),$result);
+				throw new ValidationException("The Authorization request failed with message '$result->error'", array("<a href='https://support.instamojo.com/hc/en-us/articles/214564625-Payment-Gateway-Authorization-Failed' target='_blank'>Payment Gateway Authorization Failed</a>"),$result);
 			}else
-				$this->access_token = 	$result->access_token;
+				$this->access_token = $result->access_token;
 		}
 		
 		$this->auth_headers[] = "Authorization:Bearer $this->access_token";

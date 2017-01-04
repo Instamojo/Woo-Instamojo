@@ -108,25 +108,25 @@ class Curl
 	
 	private function execute()
 	{
-		$tuData = curl_exec($this->ch); 
-		$this->error = "Error Number ".curl_errno($this->ch)." with Message ".curl_error($this->ch);
-		$this->responseCode = curl_getinfo($this->ch);
-		$this->responseCode = $this->responseCode['http_code'];
+		$tuData = curl_exec($this->ch);
+
+		$error_number = curl_errno($this->ch);
+        $error_message = curl_error($this->ch);
+
+        $this->errorMessage = "cURL Error Number: $error_number. Error message: $error_message.";
+
+        if ($error_number == 7){
+        	$this->errorMessage = "<a href='https://support.instamojo.com/hc/en-us/articles/214079929' target='_blank'>cURL Error Number: $error_number. Error message: $error_message.<a/>";
+        }
+		
+		$this->responseCode = curl_getinfo($this->ch)['http_code'];
 
 		if(!$tuData)
-			throw new CurlException(curl_error($this->ch),$this); 
-			
-		if($error_no = curl_errno($this->ch)){ 
-		$error_message = curl_error($this->ch);
-			if($error_no == 60){
-                throw new CurlException("Something went wrong. cURL raised an error with number: $error_number and message: $error_message. " .
-                                    "Please check http://stackoverflow.com/a/21114601/846892 for a fix." . PHP_EOL,$this);
-            }
-            else{
-                throw new CurlException("Something went wrong. cURL raised an error with number: $error_number and message: $error_message." . PHP_EOL,$this);
-            }
-		} 
+			throw new CurlException($this->errorMessage, $this);
 
+		if($error_number != 0){
+			throw new CurlException($this->errorMessage, $this);
+		}
 		return $tuData;
 		
 	}
@@ -169,7 +169,7 @@ class Curl
 		return "Requesting  '$this->url' url using  '$this->requestMethod' method".PHP_EOL .
 				"and Data:".print_r($this->data,true).PHP_EOL .
 				"Headers are : ".print_r($this->headers,true).PHP_EOL .
-				"ErrorMessage(if any) :".$this->error. PHP_EOL .
+				"ErrorMessage(if any) : " . $this->errorMessage. PHP_EOL .
 				"with Response Code:".$this->responseCode;
 		
 	}

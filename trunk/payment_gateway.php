@@ -68,10 +68,11 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 			}
 		
 		}catch(CurlException $e){
-			$this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage() . " and traceback: " . $e->getTraceAsString());
+			$this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
+			$this->log("Traceback: " . (string)$e);
 			$json = array(
 				"result"=>"failure",
-				"messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>".$e->getMessage()."<\/li>\n\t<\/ul>\n",
+				"messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>" . $e->getMessage() . "</li>\n\t</ul>\n",
 				"refresh"=>"false",
 				"reload"=>"false"
 				);
@@ -96,10 +97,11 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 		}
 		catch(Exception $e){
 			
-			$this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage() . " and traceback: " . $e->getTraceAsString());
+			$this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
+			$this->log("Traceback: " . $e->getTraceAsString());
 			$json = array(
 				"result"=>"failure",
-				"messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>".$e->getMessage()."<\/li>\n\t<\/ul>\n",
+				"messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>".$e->getMessage()."</li>\n\t</ul>\n",
 				"refresh"=>"false",
 				"reload"=>"false"
 				);

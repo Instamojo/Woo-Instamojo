@@ -7,19 +7,16 @@
 Class CurlException extends Exception
 {
 	private $object;
-	function __construct($message,$curlObject)
+	function __construct($message, $curlObject)
 	{
-		parent::__construct($message,0);
-		
-		
+		parent::__construct($message, 0);
 		$this->object = $curlObject;
-		
 	}
 	
 	public function __toString()
 	{
 		# will return curl object from curl.php in string manner.
-		return "ERROR at Processing cURL request".PHP_EOL.(string)$this->object;
+		return "ERROR at Processing cURL request" . PHP_EOL . (string)$this->object;
 	}
 	
 }
