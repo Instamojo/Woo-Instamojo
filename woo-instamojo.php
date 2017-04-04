@@ -27,9 +27,15 @@ $plugin = plugin_basename(__FILE__);
 add_filter("plugin_action_links_$plugin", 'your_plugin_settings_link' );
 
 function woocommerce_required_admin_notice() {
+	
+  $plugin_name = 'woocommerce';
+  $install_link = '<a href="' . esc_url( network_admin_url('plugin-install.php?tab=plugin-information&plugin=' . $plugin_name . '&TB_iframe=true&width=600&height=550' ) ) . '" class="thickbox" title="More info about ' . $plugin_name . '">Install ' . $plugin_name . '</a>';
+
   echo   '<div class="updated error notice"><p>';
-      echo    _e( '<b>Instamojo</b> Plugin requires WooCommerce to be Installed First!', 'my-text-domain' ); 
+      echo    _e( '<b>Instamojo</b> Plugin requires WooCommerce to be Installed First! ' . $install_link, 'my-text-domain' ); 
    echo  '</p></div>';
+
+
 }
 
 #check if woocommerce installed.
