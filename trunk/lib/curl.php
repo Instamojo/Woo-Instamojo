@@ -122,8 +122,10 @@ class Curl
         if ($error_number == 7){
         	$this->errorMessage = "<a href='https://support.instamojo.com/hc/en-us/articles/214079929' target='_blank'>cURL Error Number: $error_number. Error message: $error_message.<a/>";
         }
-		
-		$this->responseCode = curl_getinfo($this->ch)['http_code'];
+
+		$info = curl_getinfo($this->ch);
+		$this->responseCode = $info['http_code'];
+          
 
 		if(!$tuData)
 			throw new CurlException($this->errorMessage, $this);

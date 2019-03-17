@@ -23,7 +23,9 @@ try{
 	$testmode       = 'yes' === $pgInstamojo->get_option('testmode', 'no');
 	$client_id      = $pgInstamojo->get_option('client_id');
 	$client_secret  = $pgInstamojo->get_option('client_secret');
-	insta_log("Client ID: $client_id | Client Secret: $client_secret  | Testmode: $testmode ");
+	$xclient_id      = truncate_secret($client_id);
+	$xclient_secret  = truncate_secret($client_secret);
+	insta_log("Client ID: $xclient_id | Client Secret: $xclient_secret | Testmode: $testmode ");
 	
 	$api = new Instamojo($client_id, $client_secret, $testmode);
 	$response = $api->getOrderById($payment_request_id);

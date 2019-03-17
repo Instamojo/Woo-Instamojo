@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 1.0.6
+Version: 1.0.7
 Author: instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
@@ -30,6 +30,12 @@ function insta_log($message){
     $log->add( 'instamojo', $message );
     
 }
+
+function truncate_secret($secret){
+  // function for truncating client_id and client_secret
+  return substr($secret, 0, 4) . str_repeat('x', 10);
+}
+
 # register our GET variables
 function add_query_vars_filter( $vars ){
   $vars[] = "payment_id";
@@ -100,8 +106,9 @@ function init_instamojo_payment_gateway()
       {
         include_once "lib/Instamojo.php";
         $this->log("Creating Instamojo Order for order id: $orderId");
-        $this->log("Client ID: $this->client_id | Client Secret: $this->client_secret  | Testmode: $this->testmode ");
-        
+        $xclient_id      = $this->truncate_secret($this->client_id);
+        $xclient_secret  = $this->truncate_secret($this->client_secret);
+        $this->log("Client ID: $xclient_id | Client Secret: $xclient_secret | Testmode: $this->testmode ");       
         $order = new WC_Order( $orderId );
         try{
           
@@ -177,6 +184,11 @@ function init_instamojo_payment_gateway()
         insta_log($message);
       }
       
+      public static function truncate_secret( $secret ) 
+      {
+        return truncate_secret($secret);
+      }
+
     }
 
 }

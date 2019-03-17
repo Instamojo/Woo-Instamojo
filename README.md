@@ -39,7 +39,7 @@ Now go to WooCommerce's settings tab (left sidebar on your WordPress dashboard) 
 Migrating from version 0.1.3 to 1.0.x
 -------------------------------------
 
-The version 1.x is a major change from 0.1.3 and will affect your payments if the migration is not done properly.
+The version 1.x is a major change from 0.1.3 and will affect your payments if the migration is not done properly. 
 
 **The advantages of the new plugin are:**
 
@@ -60,6 +60,12 @@ Inside `wc-logs` there’s going to be file whose name starts with `instamojo`.
 Changelog
 ---------
 
+**1.0.7**
+
+* Updated supported WordPress version to 4.8.0
+* Made log files more secure 
+* Fixed compatibility issues with PHP versions below 5.4.0
+
 **1.0.6**
 
 * Updated supported WordPress version to 4.7.2
@@ -67,7 +73,7 @@ Changelog
 
 **1.0.5**
 
-* Updated supported WordPress version to 4.7.1.
+* Updated supported WordPress version to 4.7.1
 * Added checks related to WooCommerce and cURL during plugin installation.
 
 **1.0.4**
@@ -76,7 +82,7 @@ Changelog
 
 **1.0.3**
 
-* Better error messages(with links) and logging.
+* Better error messages(with links) and logging. 
 
 **1.0.2**
 
@@ -86,7 +92,7 @@ Changelog
 
 * Fixed issue related to getting payment status.
 
-**1.0.0**
+**1.0.0** 
 
 This version(1.x) is a major change from 0.1.3.
 * We have now switched from product link based approach to Integrations API.
@@ -133,7 +139,7 @@ This version(1.x) is a major change from 0.1.3.
 * Updated supported WordPress version to 4.3.
 * Small update to the Installation docs.
 
-**0.0.5**
+**0.0.5** 
 
 * Handle phone numbers with "+" properly.
 * Added '/' at the end of the payment detail URL to avoid an extra redirection.
@@ -157,4 +163,4 @@ This version(1.x) is a major change from 0.1.3.
 
 **1.0.0**
 
-The version 1.x is a major change from 0.1.3 and will affect your payments if the migration is not done properly.
+The version 1.x is a major change from 0.1.3 and will affect your payments if the migration is not done properly. 
