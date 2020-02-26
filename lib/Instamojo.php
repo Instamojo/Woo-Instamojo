@@ -33,6 +33,7 @@ Class Instamojo
 		
 		$this->getAccessToken();
 	}
+
 	public function getAccessToken()
 	{
 		$data = array();
@@ -55,6 +56,14 @@ Class Instamojo
 		$this->auth_headers[] = "Authorization:Bearer $this->access_token";
 		
 	}
+
+        public function createPaymentRequest($data)
+        {
+            $endpoint = $this->api_endpoint .'payment_requests/';
+            $result = $this->curl->post($endpoint, $data, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
 	
 	public function createOrderPayment($data)
 	{

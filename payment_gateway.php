@@ -28,8 +28,8 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 		$this->client_secret  = $this->get_option( 'client_secret' );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 	}
-	
-	public function init_form_fields()
+
+        public function init_form_fields()
 	{
 		$this->form_fields = include("instamojo-settings.php");		
 	}
@@ -42,30 +42,30 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 		
 		$order = new WC_Order( $orderId );
 		try{
-			
-			$api = new Instamojo($this->client_id, $this->client_secret, $this->testmode);
-			
-			$api_data['name'] = substr(trim((html_entity_decode( $order->billing_first_name ." ".$order->billing_last_name, ENT_QUOTES, 'UTF-8'))), 0, 20);
-			$api_data['email'] 			= substr($order->billing_email, 0, 75);
-			$api_data['phone'] 			= substr(html_entity_decode($order->billing_phone, ENT_QUOTES, 'UTF-8'), 0, 20);
-			$api_data['amount'] 		= $this->get_order_total();
-			$api_data['currency'] 		= "INR";
-			$api_data['redirect_url'] 	= get_site_url();
-			$api_data['transaction_id'] = time()."-". $orderId;
-			$this->log("Data sent for creating order ".print_r($api_data,true));
-			
-			$response = $api->createOrderPayment($api_data);
-			$this->log("Response from server on creating order".print_r($response,true));
-			if(isset($response->order))
-			{
-				$url = $response->payment_options->payment_url;
-				WC()->session->set( 'payment_request_id',  $response->order->id);	
-				// die( json_encode(array("result"=>"success", "redirect"=>$url)));
-				return array(
-                    'result' => 'success', 
-                    'redirect' => $url
-                );
-			}
+                    $api = new Instamojo($this->client_id, $this->client_secret, $this->testmode);
+
+                    $api_data['buyer_name'] = substr(trim((html_entity_decode( $order->billing_first_name ." ".$order->billing_last_name, ENT_QUOTES, 'UTF-8'))), 0, 20);
+                    $api_data['email'] = substr($order->billing_email, 0, 75);
+                    $api_data['phone'] = substr(html_entity_decode($order->billing_phone, ENT_QUOTES, 'UTF-8'), 0, 20);
+                    $api_data['amount'] = $this->get_order_total();
+                    $api_data['currency'] = "INR";
+                    $api_data['redirect_url'] = get_site_url();
+                    $api_data['purpose'] = $orderId;
+                    $api_data['send_email'] = 'True';
+                    $api_data['send_sms'] = 'True';
+                    //$api_data['webhook'] = get_site_url();
+                    $api_data['allow_repeated_payments'] = 'False';
+                    $this->log("Data sent for creating order ".print_r($api_data,true));
+
+                    $response = $api->createPaymentRequest($api_data);
+
+                    $this->log("Response from server on creating payment request".print_r($response,true));
+
+                    if (isset($response->id)) {
+                        WC()->session->set( 'payment_request_id',  $response->id);
+                        //die( json_encode(array("result" => "success", "redirect" => $response->longurl)));
+                        return array('result' => 'success', 'redirect' => $response->longurl);
+                    }
 		
 		}catch(CurlException $e){
 			$this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
