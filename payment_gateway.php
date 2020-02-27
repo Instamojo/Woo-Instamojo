@@ -8,7 +8,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 	private $testmode;
 	private $client_id;
 	private $client_secret;
-	
+        private $localhost_list = array('127.0.0.1', '::1');
 	
 	public function __construct()
 	{
@@ -53,7 +53,9 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
                     $api_data['purpose'] = $orderId;
                     $api_data['send_email'] = 'True';
                     $api_data['send_sms'] = 'True';
-                    //$api_data['webhook'] = get_site_url();
+                    if (!$this->isLocalhost()) {
+                        $api_data['webhook'] = get_site_url();
+                    }
                     $api_data['allow_repeated_payments'] = 'False';
                     $this->log("Data sent for creating order ".print_r($api_data,true));
 
@@ -114,5 +116,8 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 	{
 		insta_log($message);
 	}
-	
+
+        private function isLocalhost() {
+            return (in_array($_SERVER['REMOTE_ADDR'], $this->localhost_list)) ? true : false;
+        }
 }
