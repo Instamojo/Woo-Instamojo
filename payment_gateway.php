@@ -97,12 +97,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
             insta_log($message);
 	}
 
-        private function init_form_fields()
-	{
-            $this->form_fields = include("instamojo-settings.php");		
-	}
-
-        private function init_settings()
+        public function init_settings()
         {
             parent::init_settings();
             $this->title          = $this->get_option( 'title' );
@@ -111,6 +106,11 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
             $this->client_id      = $this->get_option( 'client_id' );
             $this->client_secret  = $this->get_option( 'client_secret' );
         }
+
+        public function init_form_fields()
+	{
+            $this->form_fields = include("instamojo-settings.php");		
+	}
 
         private function enable_payment_gateway()
         {
