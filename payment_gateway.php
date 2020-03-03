@@ -9,7 +9,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 	private $client_id;
 	private $client_secret;
         private $localhost_list = array('127.0.0.1', '::1');
-	private static $instamojo_api = null;
+	private $instamojo_api = null;
         
 	public function __construct()
 	{
@@ -26,6 +26,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 
 	public function process_payment($orderId)
 	{
+            $this->log("Creating Instamojo Order for order id: $orderId");
             $order = new WC_Order($orderId);
             try{
                 $api = $this->get_instamojo_api();
@@ -129,15 +130,14 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
             die(json_encode($json));
         }
 
-        static function get_instamojo_api()
+        private function get_instamojo_api()
         {
-            if (null === self::$instamojo_api) {
+            if (null === $this->instamojo_api) {
                 include_once "lib/Instamojo.php";
-                $this->log("Creating Instamojo Order for order id: $orderId");
                 $this->log("Client ID: $this->client_id | Client Secret: $this->client_secret  | Testmode: $this->testmode ");
 
                 try{
-                    self::$instamojo_api = new Instamojo($this->client_id, $this->client_secret, $this->testmode);
+                    $this->instamojo_api = new Instamojo($this->client_id, $this->client_secret, $this->testmode);
                 } catch(Exception $e) {
                     $this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
                     $this->log("Traceback: " . $e->getTraceAsString());
@@ -151,7 +151,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
                 }
             }
 
-            return self::$instamojo_api;
+            return $this->instamojo_api;
         }
 
         private function is_localhost() {
