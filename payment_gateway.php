@@ -21,7 +21,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
 
             $this->init_form_fields();
             $this->init_settings();
-            $this->enable_payment_gateway();
+            $this->add_to_payment_gateway_option();
 	}
 
 	public function process_payment($orderId)
@@ -113,7 +113,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
             $this->form_fields = include("instamojo-settings.php");		
 	}
 
-        private function enable_payment_gateway()
+        private function add_to_payment_gateway_option()
         {
             if (isset($this->client_id) && $this->client_secret) {
                 add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
