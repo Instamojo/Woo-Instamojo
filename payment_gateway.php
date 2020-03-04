@@ -13,6 +13,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	private $client_secret;
         private $localhost_list = array('127.0.0.1', '::1');
 	private $instamojo_api = null;
+        private $valid_refund_types = ['RFD', 'TNR', 'QFL', 'QNR', 'EWN', 'TAN', 'PTH'];
         
 	public function __construct()
 	{
@@ -76,6 +77,37 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 }
 
                 return array('result' => 'error', 'message' => $response->message);
+            } catch(CurlException $e) {
+                $this->handle_curl_exception($e);
+            } catch(ValidationException $e) {
+                $this->handle_validation_exception($e);
+            } catch(Exception $e) {
+                $this->handle_exception($e);
+            }
+        }
+
+        public function create_refund($payment_id, $trasnaction_id, $refund_amount, $refund_type, $refund_reason)
+        {
+            $this->log("Creating Refund for payment id: $payment_id");
+            try{
+                if (!in_array($refund_type, $this->valid_refund_types)) {
+                    $this->handle_error('Invalid Refund Type :'.$refund_type);
+                }
+
+                $api = $this->get_instamojo_api();
+
+                $api_data['transaction_id'] = $trasnaction_id;
+                $api_data['refund_amount'] = $refund_amount;
+                $api_data['type'] = substr(html_entity_decode($refund_type, ENT_QUOTES, 'UTF-8'), 0, 3);
+                $api_data['body'] = substr(html_entity_decode($refund_reason, ENT_QUOTES, 'UTF-8'), 0, 100);
+                $this->log("Data sent for creating refund ".print_r($response,true));
+                $response = $api->create_refund($payment_id, $api_data);
+                $this->log("Response from server on getting payment detail".print_r($response,true));
+                if ($response->success == true) {
+                    return array('result' => 'success', 'refund' => $response);
+                }
+
+                return array('result' => 'error', 'message' => $response);
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {

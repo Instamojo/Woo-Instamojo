@@ -73,6 +73,14 @@ Class Instamojo
             return json_decode($result);
         }
 
+        public function create_refund($payment_id, $data)
+        {
+            $endpoint = $this->api_endpoint .'payments/'.$payment_id.'/refund/';
+            $result = $this->curl->post($endpoint, $data, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
 	public function createOrderPayment($data)
 	{
 		$endpoint = $this->api_endpoint ."gateway/orders/";
