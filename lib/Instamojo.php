@@ -31,10 +31,10 @@ Class Instamojo
 		else
 			$this->auth_endpoint = "https://www.instamojo.com/oauth2/token/"; 
 		
-		$this->getAccessToken();
+		$this->get_access_token();
 	}
 
-	public function getAccessToken()
+	public function get_access_token()
 	{
 		$data = array();
 		$data['client_id']		= $this->client_id;
@@ -57,14 +57,22 @@ Class Instamojo
 		
 	}
 
-        public function createPaymentRequest($data)
+        public function create_payment_request($data)
         {
             $endpoint = $this->api_endpoint .'payment_requests/';
             $result = $this->curl->post($endpoint, $data, array('headers' => $this->auth_headers));
 
             return json_decode($result);
         }
-	
+
+        public function get_payment_detail($payment_id)
+        {
+            $endpoint = $this->api_endpoint .'payments/'.$payment_id;
+            $result = $this->curl->get($endpoint, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
 	public function createOrderPayment($data)
 	{
 		$endpoint = $this->api_endpoint ."gateway/orders/";

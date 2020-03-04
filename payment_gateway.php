@@ -2,9 +2,12 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+include_once "lib/ErrorHandler.php";
 
-Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
+Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	
+        use ErrorHandler;
+
         private $testmode;
 	private $client_id;
 	private $client_secret;
@@ -45,54 +48,43 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
                 }
                 $api_data['allow_repeated_payments'] = 'False';
                 $this->log("Data sent for creating order ".print_r($api_data,true));
-
                 $response = $api->createPaymentRequest($api_data);
-
                 $this->log("Response from server on creating payment request".print_r($response,true));
-
                 if (isset($response->id)) {
                     WC()->session->set( 'payment_request_id',  $response->id);
-                    //die( json_encode(array("result" => "success", "redirect" => $response->longurl)));
                     return array('result' => 'success', 'redirect' => $response->longurl);
                 }
             } catch(CurlException $e) {
-                    $this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
-                    $this->log("Traceback: " . (string)$e);
-                    $json = array(
-                            "result"=>"failure",
-                            "messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>" . $e->getMessage() . "</li>\n\t</ul>\n",
-                            "refresh"=>"false",
-                            "reload"=>"false"
-                            );
-
-                    die(json_encode($json));
+                $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
-                    $this->log("Validation Exception Occured with response ".print_r($e->getResponse(), true));
-                    $errors_html = "<ul class=\"woocommerce-error\">\n\t\t\t";
-                    foreach ( $e->getErrors() as $error) {
-                        $errors_html .="<li>".$error."</li>";
-                    }
-                    $errors_html .= "</ul>";
-                    $json = array(
-                            "result"=>"failure",
-                            "messages"=>$errors_html,
-                            "refresh"=>"false",
-                            "reload"=>"false"
-                            );
-                    die(json_encode($json));
+                $this->handle_validation_exception($e);
             } catch(Exception $e) {
-                    $this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
-                    $this->log("Traceback: " . $e->getTraceAsString());
-                    $json = array(
-                            "result"=>"failure",
-                            "messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>".$e->getMessage()."</li>\n\t</ul>\n",
-                            "refresh"=>"false",
-                            "reload"=>"false"
-                            );
-                    die(json_encode($json));
+                $this->handle_exception($e);
             }
 	}
-	
+
+        public function get_payment_details($payment_id)
+        {
+            $this->log("Getting Payment detail for payment id: $payment_id");
+            try{
+                $api = $this->get_instamojo_api();
+                $this->log("Data sent for getting payment detail ".$payment_id);
+                $response = $api->get_payment_detail($payment_id);
+                $this->log("Response from server on getting payment detail".print_r($response,true));
+                if (isset($response->id)) {
+                    return array('result' => 'success', 'payment_detail' => $response);
+                }
+
+                return array('result' => 'error', 'message' => $response->message);
+            } catch(CurlException $e) {
+                $this->handle_curl_exception($e);
+            } catch(ValidationException $e) {
+                $this->handle_validation_exception($e);
+            } catch(Exception $e) {
+                $this->handle_exception($e);
+            }
+        }
+
 	public static function log( $message ) 
 	{
             insta_log($message);
@@ -120,14 +112,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
                 return;
             }
 
-            $this->log("An error occurred, missing value for client_id and/or client_secret.");
-            $json = array(
-                "result"=>"failure",
-                "messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>An error occurred, missing value for client_id and/or client_secret.</li>\n\t</ul>\n",
-                "refresh"=>"false",
-                "reload"=>"false"
-            );
-            die(json_encode($json));
+            $this->handle_error('An error occurred, missing value for client_id and/or client_secret.');
         }
 
         private function get_instamojo_api()
@@ -135,26 +120,18 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway{
             if (null === $this->instamojo_api) {
                 include_once "lib/Instamojo.php";
                 $this->log("Client ID: $this->client_id | Client Secret: $this->client_secret  | Testmode: $this->testmode ");
-
                 try{
                     $this->instamojo_api = new Instamojo($this->client_id, $this->client_secret, $this->testmode);
                 } catch(Exception $e) {
-                    $this->log("An error occurred on line " . $e->getLine() . " with message " .  $e->getMessage());
-                    $this->log("Traceback: " . $e->getTraceAsString());
-                    $json = array(
-                            "result"=>"failure",
-                            "messages"=>"<ul class=\"woocommerce-error\">\n\t\t\t<li>".$e->getMessage()."</li>\n\t</ul>\n",
-                            "refresh"=>"false",
-                            "reload"=>"false"
-                            );
-                    die(json_encode($json));
+                    $this->handle_exception($e);
                 }
             }
 
             return $this->instamojo_api;
         }
 
-        private function is_localhost() {
+        private function is_localhost()
+        {
             return (in_array($_SERVER['REMOTE_ADDR'], $this->localhost_list)) ? true : false;
         }
 }
