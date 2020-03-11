@@ -81,6 +81,14 @@ Class Instamojo
             return json_decode($result);
         }
 
+        public function get_payment_list($query_string)
+        {
+            $endpoint = $this->api_endpoint .'payments?'. http_build_query($query_string);
+            $result = $this->curl->get($endpoint, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
 	public function createOrderPayment($data)
 	{
 		$endpoint = $this->api_endpoint ."gateway/orders/";

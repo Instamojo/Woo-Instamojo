@@ -35,9 +35,9 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
             try{
                 $api = $this->get_instamojo_api();
 
-                $api_data['buyer_name'] = substr(trim((html_entity_decode( $order->billing_first_name ." ".$order->billing_last_name, ENT_QUOTES, 'UTF-8'))), 0, 20);
+                $api_data['buyer_name'] = $this->encode_string_data(trim($order->billing_first_name .' '.$order->billing_last_name, ENT_QUOTES), 20);
                 $api_data['email'] = substr($order->billing_email, 0, 75);
-                $api_data['phone'] = substr(html_entity_decode($order->billing_phone, ENT_QUOTES, 'UTF-8'), 0, 20);
+                $api_data['phone'] = $this->encode_string_data($order->billing_phone, 20);
                 $api_data['amount'] = $this->get_order_total();
                 $api_data['currency'] = "INR";
                 $api_data['redirect_url'] = get_site_url();
@@ -98,8 +98,8 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 
                 $api_data['transaction_id'] = $trasnaction_id;
                 $api_data['refund_amount'] = $refund_amount;
-                $api_data['type'] = substr(html_entity_decode($refund_type, ENT_QUOTES, 'UTF-8'), 0, 3);
-                $api_data['body'] = substr(html_entity_decode($refund_reason, ENT_QUOTES, 'UTF-8'), 0, 100);
+                $api_data['type'] = $this->encode_string_data($refund_type, 3);
+                $api_data['body'] = $this->encode_string_data($refund_reason, 100);
                 $this->log("Data sent for creating refund ".print_r($response,true));
                 $response = $api->create_refund($payment_id, $api_data);
                 $this->log("Response from server on getting payment detail".print_r($response,true));
@@ -108,6 +108,41 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 }
 
                 return array('result' => 'error', 'message' => $response);
+            } catch(CurlException $e) {
+                $this->handle_curl_exception($e);
+            } catch(ValidationException $e) {
+                $this->handle_validation_exception($e);
+            } catch(Exception $e) {
+                $this->handle_exception($e);
+            }
+        }
+
+        public function get_payment_list($page = 1 ,$payment_id = '', $buyer_name = '', $seller_name = '', $payout = '', $product_slug = '', $order_id = '', $min_created_at = '', $max_created_at = '', $min_updated_at = '', $max_updated_at = '')
+        {
+            $this->log("Getting Payments list for payment_id : $payment_id, buyer_name : $buyer_name, seller_name : $seller_name, payout : $payout, product_slug : $product_slug, order_id : $order_id, min_created_at : $min_created_at, max_created_at : $max_created_at, min_updated_at : $min_updated_at, max_updated_at : $max_updated_at");
+            try{
+                $api = $this->get_instamojo_api();
+
+                $query_string['page'] = $page;
+                $query_string['payment_id'] = $this->encode_string_data($payment_id, 20);
+                $query_string['buyer'] = $this->encode_string_data($buyer_name, 100);
+                $query_string['seller'] = $this->encode_string_data($seller_name, 100);
+                $query_string['payout'] = $this->encode_string_data($payout, 20);
+                $query_string['product'] = $this->encode_string_data($product_slug, 100);
+                $query_string['order_id'] = $this->encode_string_data($order_id, 100);
+                $query_string['min_created_at'] = $this->encode_string_data($min_created_at, 24);
+                $query_string['max_created_at'] = $this->encode_string_data($max_created_at, 24);
+                $query_string['$min_updated_at'] = $this->encode_string_data($min_updated_at, 24);
+                $query_string['max_updated_at'] = $this->encode_string_data($max_updated_at, 24);
+
+                $this->log('Data sent for getting payments list');
+                $response = $api->get_payment_list($this->remove_empty_elements_from_array($query_string));
+                $this->log("Response from server on getting payment list".print_r($response,true));
+                if (isset($response->id)) {
+                    return array('result' => 'success', 'payment_list' => $response);
+                }
+
+                return array('result' => 'error', 'message' => $response->message);
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -165,5 +200,21 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         private function is_localhost()
         {
             return (in_array($_SERVER['REMOTE_ADDR'], $this->localhost_list)) ? true : false;
+        }
+
+        private function encode_string_data($string_data, $max_length = null)
+        {
+            $string_data = html_entity_decode($string_data, ENT_QUOTES, 'UTF-8');
+
+            if ($max_length == null) {
+                return $string_data;
+            }
+
+            return substr($string_data, 0, $max_length);
+        }
+
+        private function remove_empty_elements_from_array($data_array)
+        {
+            return array_filter($data_array, function($value) { return !is_null($value) && $value !== ''; });
         }
 }
