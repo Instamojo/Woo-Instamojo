@@ -89,6 +89,30 @@ Class Instamojo
             return json_decode($result);
         }
 
+        public function initiate_gateway_order($data)
+        {
+            $endpoint = $this->api_endpoint .'gateway/orders';
+            $result = $this->curl->post($endpoint, $data, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
+        public function get_gateway_payment($id)
+        {
+            $endpoint = $this->api_endpoint .'gateway/orders/id:'. $id;
+            $result = $this->curl->get($endpoint, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
+        public function get_checkout_options_for_gateway_order($id)
+        {
+            $endpoint = $this->api_endpoint .'gateway/orders/'. $id.'/checkout-options/';
+            $result = $this->curl->get($endpoint, array('headers' => $this->auth_headers));
+
+            return json_decode($result);
+        }
+
 	public function createOrderPayment($data)
 	{
 		$endpoint = $this->api_endpoint ."gateway/orders/";
@@ -111,8 +135,7 @@ Class Instamojo
 				throw new ValidationException("Validation Error Occured with following Errors : ",$errors,$result);
 		}
 	}
-	
-	
+
 	public function getOrderById($id)
 	{
 		$endpoint = $this->api_endpoint."gateway/orders/id:$id/";

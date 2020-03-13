@@ -15,7 +15,9 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	private $instamojo_api = null;
         private $valid_refund_types = ['RFD', 'TNR', 'QFL', 'QNR', 'EWN', 'TAN', 'PTH'];
         
-	public function __construct()
+        private const DEFAULT_CURRENCY = 'INR'; 
+
+        public function __construct()
 	{
             $this->id = "instamojo";
             $this->icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAeZJREFUOI19krtuE0EUhv9zdmd3LYSECEi20WJBBVTAM8RGioREFwrAtNBQ2E4DNU3WFNSQyJYtpUsaF7kg3gAQUPACdoQgEsQ49to7cyiIE+2uzUinmTPfN/9cKFfZvkfEzwgYYNYgUpGYyveg9HVmGwAuVXY3OHNmWSYhBJLgGaInQ2PM7f36nW9JAaPTetkNivfN8KgBywKMjpXoCcCcIeZP2ZXd62mB0BV02ofd+uJjGYVNUl46pzEgYpcFH5ISBmEMzz2LTvtH91WxLGHYmCkRA2L2khIGAGgNWNYFdFo//yUZNUm585J4LPiYq2xfOxWcSOyF0yTjBjkZgO14EYNtxyXmL/nazk07tsNJkvZBd2lxIV/d+0UkN4SgE6cBAbaAV+KC45jwvPN41yjzgXorF8e3mEgnlwmEyYgXFxAByga4/8BvXv0jOflMcIHE3wAIbCmYcPDcTsHOUbmwVhhE2WgL2gCShsl2oMN+tbdaqvPxHGDbgBo98t8UfuscNiHzYAUzCWu91VJ9+goEpQA1fFhY9/smjy0x+j/wuNYLisF0lkHkQA6f+muX+1FWNiHzYCcFT8PDf/J+Wc7xhuhoxoUBZCmYKKxOY8d6+erOXYBbINEEmBQNOEbkxX5Qej2jh79RaeQT2vwcPgAAAABJRU5ErkJggg==";
@@ -32,6 +34,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	{
             $this->log("Creating Instamojo Order for order id: $orderId");
             $order = new WC_Order($orderId);
+
             try{
                 $api = $this->get_instamojo_api();
 
@@ -49,7 +52,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 }
                 $api_data['allow_repeated_payments'] = 'False';
                 $this->log("Data sent for creating order ".print_r($api_data,true));
-                $response = $api->createPaymentRequest($api_data);
+                $response = $api->create_payment_request($api_data);
                 $this->log("Response from server on creating payment request".print_r($response,true));
                 if (isset($response->id)) {
                     WC()->session->set( 'payment_request_id',  $response->id);
@@ -151,6 +154,54 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $this->handle_exception($e);
             }
         }
+        
+        public function get_gateway_order(string $id) {
+
+            $this->log("Get Gateway Order for id: $id");
+            
+            try{
+                $api = $this->get_instamojo_api();
+
+                $this->log('Data sent for getting gateway order');
+                $response = $api->get_gateway_order($id);
+                $this->log("Response from server on getting getway order".print_r($response,true));
+                if (isset($response->id)) {
+                    return array('result' => 'success', 'payment_list' => $response);
+                }
+
+                return array('result' => 'error', 'message' => $response);
+            } catch(CurlException $e) {
+                $this->handle_curl_exception($e);
+            } catch(ValidationException $e) {
+                $this->handle_validation_exception($e);
+            } catch(Exception $e) {
+                $this->handle_exception($e);
+            }
+        }
+        
+        public function get_checkout_options_for_gateway_order(string $id) {
+
+            $this->log("Get Checkout Options for Gateway Order for id: $id");
+            
+            try{
+                $api = $this->get_instamojo_api();
+
+                $this->log('Data sent for getting checkout options for gateway order');
+                $response = $api->get_checkout_options_for_gateway_order($id);
+                $this->log("Response from server on getting getway order".print_r($response,true));
+                if (isset($response->id)) {
+                    return array('result' => 'success', 'payment_list' => $response);
+                }
+
+                return array('result' => 'error', 'message' => $response);
+            } catch(CurlException $e) {
+                $this->handle_curl_exception($e);
+            } catch(ValidationException $e) {
+                $this->handle_validation_exception($e);
+            } catch(Exception $e) {
+                $this->handle_exception($e);
+            }
+        }
 
 	public static function log( $message ) 
 	{
@@ -174,12 +225,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 
         private function add_to_payment_gateway_option()
         {
-            if (isset($this->client_id) && $this->client_secret) {
-                add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-                return;
-            }
-
-            $this->handle_error('An error occurred, missing value for client_id and/or client_secret.');
+            add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options' ));
         }
 
         private function get_instamojo_api()
