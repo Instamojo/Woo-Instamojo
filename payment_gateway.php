@@ -127,7 +127,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $api = $this->get_instamojo_api();
 
                 $query_string['page'] = $page;
-                $query_string['payment_id'] = $this->encode_string_data($payment_id, 20);
+                $query_string['id'] = $this->encode_string_data($payment_id, 20);
                 $query_string['buyer'] = $this->encode_string_data($buyer_name, 100);
                 $query_string['seller'] = $this->encode_string_data($seller_name, 100);
                 $query_string['payout'] = $this->encode_string_data($payout, 20);
@@ -135,7 +135,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $query_string['order_id'] = $this->encode_string_data($order_id, 100);
                 $query_string['min_created_at'] = $this->encode_string_data($min_created_at, 24);
                 $query_string['max_created_at'] = $this->encode_string_data($max_created_at, 24);
-                $query_string['$min_updated_at'] = $this->encode_string_data($min_updated_at, 24);
+                $query_string['min_updated_at'] = $this->encode_string_data($min_updated_at, 24);
                 $query_string['max_updated_at'] = $this->encode_string_data($max_updated_at, 24);
 
                 $this->log('Data sent for getting payments list');
