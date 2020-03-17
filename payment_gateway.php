@@ -120,13 +120,14 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
             }
         }
 
-        public function get_payment_list($page = 1 ,$payment_id = '', $buyer_name = '', $seller_name = '', $payout = '', $product_slug = '', $order_id = '', $min_created_at = '', $max_created_at = '', $min_updated_at = '', $max_updated_at = '')
+        public function get_payment_list($page = 1, $limit = 10, $payment_id = '', $buyer_name = '', $seller_name = '', $payout = '', $product_slug = '', $order_id = '', $min_created_at = '', $max_created_at = '', $min_updated_at = '', $max_updated_at = '')
         {
             $this->log("Getting Payments list for payment_id : $payment_id, buyer_name : $buyer_name, seller_name : $seller_name, payout : $payout, product_slug : $product_slug, order_id : $order_id, min_created_at : $min_created_at, max_created_at : $max_created_at, min_updated_at : $min_updated_at, max_updated_at : $max_updated_at");
             try{
                 $api = $this->get_instamojo_api();
 
                 $query_string['page'] = $page;
+                $query_string['limit'] = $limit;
                 $query_string['id'] = $this->encode_string_data($payment_id, 20);
                 $query_string['buyer'] = $this->encode_string_data($buyer_name, 100);
                 $query_string['seller'] = $this->encode_string_data($seller_name, 100);
@@ -140,12 +141,12 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 
                 $this->log('Data sent for getting payments list');
                 $response = $api->get_payment_list($this->remove_empty_elements_from_array($query_string));
+
                 $this->log("Response from server on getting payment list".print_r($response,true));
-                if (isset($response->id)) {
+                if (isset($response->payments) and $response->payments instanceof \Traversable) {
                     return array('result' => 'success', 'payment_list' => $response);
                 }
-
-                return array('result' => 'error', 'message' => $response->message);
+                return array('result' => 'error', 'message' => $response);
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
