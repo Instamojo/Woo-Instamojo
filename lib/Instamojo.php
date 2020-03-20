@@ -91,13 +91,13 @@ Class Instamojo
 
         public function initiate_gateway_order($data)
         {
-            $endpoint = $this->api_endpoint .'gateway/orders';
+            $endpoint = $this->api_endpoint .'gateway/orders/';
             $result = $this->curl->post($endpoint, $data, array('headers' => $this->auth_headers));
 
             return json_decode($result);
         }
 
-        public function get_gateway_payment($id)
+        public function get_gateway_order_detail($id)
         {
             $endpoint = $this->api_endpoint .'gateway/orders/id:'. $id;
             $result = $this->curl->get($endpoint, array('headers' => $this->auth_headers));
@@ -112,41 +112,6 @@ Class Instamojo
 
             return json_decode($result);
         }
-
-	public function createOrderPayment($data)
-	{
-		$endpoint = $this->api_endpoint ."gateway/orders/";
-		$result = $this->curl->post($endpoint,$data,array("headers"=>$this->auth_headers));
-			$result =json_decode($result);
-		if(isset($result->order))
-		{
-			return $result;
-		}else{
-			$errors = array();  
-			if(isset($result->message))
-				throw new ValidationException("Validation Error with message: $result->message",array($result->message),$result);
-			
-			foreach($result as $k=>$v)
-			{
-				if(is_array($v))
-					$errors[] =$v[0];
-			}
-			if($errors)
-				throw new ValidationException("Validation Error Occured with following Errors : ",$errors,$result);
-		}
-	}
-
-	public function getOrderById($id)
-	{
-		$endpoint = $this->api_endpoint."gateway/orders/id:$id/";
-		$result = $this->curl->get($endpoint,array("headers"=>$this->auth_headers));
-		
-		$result = json_decode($result);
-		if(isset($result->id) and $result->id)
-			return $result;
-		else
-			throw new Exception("Unable to Fetch Payment Request id:'$id' Server Responds ".print_r($result,true));
-	}
 
 	public function getPaymentStatus($payment_id, $payments){
 		foreach($payments as $payment){

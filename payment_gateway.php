@@ -2,7 +2,9 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-include_once "lib/ErrorHandler.php";
+include_once 'lib/ErrorHandler.php';
+include_once 'lib/Validator.php';
+
 
 Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	
@@ -14,8 +16,10 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         private $localhost_list = array('127.0.0.1', '::1');
 	private $instamojo_api = null;
         private $valid_refund_types = ['RFD', 'TNR', 'QFL', 'QNR', 'EWN', 'TAN', 'PTH'];
+        private $validator = null;
         
         private const DEFAULT_CURRENCY = 'INR'; 
+        private const PURPOSE_FIRLD_PREFIX = 'Order-';
 
         public function __construct()
 	{
@@ -30,21 +34,19 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
             $this->add_to_payment_gateway_option();
 	}
 
-	public function process_payment($orderId)
+	public function process_payment($order_id)
 	{
-            $this->log("Creating Instamojo Order for order id: $orderId");
+            $this->log("Creating Instamojo Order for order id: $order_id");
             $order = new WC_Order($orderId);
 
             try{
-                $api = $this->get_instamojo_api();
-
                 $api_data['buyer_name'] = $this->encode_string_data(trim($order->billing_first_name .' '.$order->billing_last_name, ENT_QUOTES), 20);
                 $api_data['email'] = substr($order->billing_email, 0, 75);
                 $api_data['phone'] = $this->encode_string_data($order->billing_phone, 20);
                 $api_data['amount'] = $this->get_order_total();
-                $api_data['currency'] = "INR";
+                $api_data['currency'] = self::DEFAULT_CURRENCY;
                 $api_data['redirect_url'] = get_site_url();
-                $api_data['purpose'] = $orderId;
+                $api_data['purpose'] = self::PURPOSE_FIRLD_PREFIX . $orderId;
                 $api_data['send_email'] = 'True';
                 $api_data['send_sms'] = 'True';
                 if (!$this->is_localhost()) {
@@ -52,11 +54,11 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 }
                 $api_data['allow_repeated_payments'] = 'False';
                 $this->log("Data sent for creating order ".print_r($api_data,true));
-                $response = $api->create_payment_request($api_data);
+                $response = $this->get_instamojo_api()->create_payment_request($api_data);
                 $this->log("Response from server on creating payment request".print_r($response,true));
                 if (isset($response->id)) {
                     WC()->session->set( 'payment_request_id',  $response->id);
-                    return array('result' => 'success', 'redirect' => $response->longurl);
+                    return array('status' => 'success', 'redirect' => $response->longurl);
                 }
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
@@ -71,15 +73,17 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         {
             $this->log("Getting Payment detail for payment id: $payment_id");
             try{
-                $api = $this->get_instamojo_api();
-                $this->log("Data sent for getting payment detail ".$payment_id);
-                $response = $api->get_payment_detail($payment_id);
-                $this->log("Response from server on getting payment detail".print_r($response,true));
-                if (isset($response->id)) {
-                    return array('result' => 'success', 'payment_detail' => $response);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate(['payment_id' => $payment_id])) {
+                    $this->log("Data sent for getting payment detail ".$payment_id);
+                    $response = $this->get_instamojo_api()->get_payment_detail($payment_id);
+                    $this->log("Response from server on getting payment detail".print_r($response,true));
+                    if (isset($response->id)) {
+                        return array('status' => 'success', 'response' => $response);
+                    }
+                    return array('status' => 'error', 'response' => $response);
                 }
-
-                return array('result' => 'error', 'message' => $response->message);
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -93,24 +97,22 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         {
             $this->log("Creating Refund for payment id: $payment_id");
             try{
-                if (!in_array($refund_type, $this->valid_refund_types)) {
-                    $this->handle_error('Invalid Refund Type :'.$refund_type);
-                }
-
-                $api = $this->get_instamojo_api();
-
                 $api_data['transaction_id'] = $trasnaction_id;
                 $api_data['refund_amount'] = $refund_amount;
                 $api_data['type'] = $this->encode_string_data($refund_type, 3);
                 $api_data['body'] = $this->encode_string_data($refund_reason, 100);
-                $this->log("Data sent for creating refund ".print_r($response,true));
-                $response = $api->create_refund($payment_id, $api_data);
-                $this->log("Response from server on getting payment detail".print_r($response,true));
-                if ($response->success == true) {
-                    return array('result' => 'success', 'refund' => $response);
-                }
 
-                return array('result' => 'error', 'message' => $response);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate(['payment_id' => $payment_id], $api_data)) {
+                    $this->log("Data sent for creating refund ".print_r($api_data,true));
+                    $response = $this->get_instamojo_api()->create_refund($payment_id, $api_data);
+                    $this->log("Response from server on getting payment detail".print_r($response,true));
+                    if (isset($response->success) && $response->success == true) {
+                        return array('status' => 'success', 'response' => $response);
+                    }
+                    return array('status' => 'error', 'response' => $response);
+                }
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -124,8 +126,6 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         {
             $this->log("Getting Payments list for payment_id : $payment_id, buyer_name : $buyer_name, seller_name : $seller_name, payout : $payout, product_slug : $product_slug, order_id : $order_id, min_created_at : $min_created_at, max_created_at : $max_created_at, min_updated_at : $min_updated_at, max_updated_at : $max_updated_at");
             try{
-                $api = $this->get_instamojo_api();
-
                 $query_string['page'] = $page;
                 $query_string['limit'] = $limit;
                 $query_string['id'] = $this->encode_string_data($payment_id, 20);
@@ -139,14 +139,17 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $query_string['min_updated_at'] = $this->encode_string_data($min_updated_at, 24);
                 $query_string['max_updated_at'] = $this->encode_string_data($max_updated_at, 24);
 
-                $this->log('Data sent for getting payments list');
-                $response = $api->get_payment_list($this->remove_empty_elements_from_array($query_string));
-
-                $this->log("Response from server on getting payment list".print_r($response,true));
-                if (isset($response->payments) and $response->payments instanceof \Traversable) {
-                    return array('result' => 'success', 'payment_list' => $response);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate($query_string)) {
+                    $this->log('Data sent for getting payments list');
+                    $response = $this->get_instamojo_api()->get_payment_list($this->remove_empty_elements_from_array($query_string));
+                    $this->log("Response from server on getting payment list".print_r($response,true));
+                    if (isset($response->payments)) {
+                        return array('status' => 'success', 'response' => $response);
+                    }
+                    return array('status' => 'error', 'response' => $response);
                 }
-                return array('result' => 'error', 'message' => $response);
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -155,22 +158,54 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $this->handle_exception($e);
             }
         }
-        
-        public function get_gateway_order(string $id) {
 
+        public function initiate_gateway_order($order_id)
+        {
+            $this->log("Initiate Gateway Orders");
+            try {
+                $order = new WC_Order($order_id);
+                $api_data['name'] = $this->encode_string_data(trim($order->billing_first_name .' '.$order->billing_last_name, ENT_QUOTES), 20);
+                $api_data['email'] = substr($order->billing_email, 0, 75);
+                $api_data['phone'] = $this->encode_string_data($order->billing_phone, 20);
+                $api_data['currency'] = self::DEFAULT_CURRENCY;
+                $api_data['amount'] = $this->get_order_total();
+                $api_data['transaction_id'] = self::PURPOSE_FIRLD_PREFIX.$order_id;
+                $api_data['redirect_url'] = get_site_url();
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate(['order_id' => $order_id], $api_data)) {
+                    $this->log('Data sent for initiate gateway order' .  print_r($api_data));
+                    $response = $this->get_instamojo_api()->initiate_gateway_order($api_data);
+                    $this->log("Response from server on initiate gateway order" . print_r($response, true));
+                    if (isset($response->order)) {
+                        return array('status' => 'success', 'redirect' => $response->payment_options->payment_url);
+                    }
+                    return array('status' => 'error', 'response' => $response);
+                }
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
+            } catch (CurlException $e) {
+                $this->handleCurlException($e);
+            } catch (ValidationException $e) {
+                $this->handleValidationException($e);
+            } catch (Exception $e) {
+               $this->handleException($e);
+            }
+        }
+
+        public function get_gateway_order_detail(string $id)
+        {
             $this->log("Get Gateway Order for id: $id");
-            
             try{
-                $api = $this->get_instamojo_api();
-
-                $this->log('Data sent for getting gateway order');
-                $response = $api->get_gateway_order($id);
-                $this->log("Response from server on getting getway order".print_r($response,true));
-                if (isset($response->id)) {
-                    return array('result' => 'success', 'payment_list' => $response);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate(['id' => $id])) {
+                    $this->log('Data sent for getting gateway order');
+                    $response = $this->get_instamojo_api()->get_gateway_order_detail($id);
+                    $this->log("Response from server on getting getway order".print_r($response,true));
+                    if (isset($response->id)) {
+                        return array('status' => 'success', 'response' => $response);
+                    }
+                    return array('status' => 'error', 'response' => $response);
                 }
-
-                return array('result' => 'error', 'message' => $response);
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -180,21 +215,21 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
             }
         }
         
-        public function get_checkout_options_for_gateway_order(string $id) {
-
+        public function get_checkout_options_for_gateway_order(string $id)
+        {
             $this->log("Get Checkout Options for Gateway Order for id: $id");
-            
             try{
-                $api = $this->get_instamojo_api();
-
-                $this->log('Data sent for getting checkout options for gateway order');
-                $response = $api->get_checkout_options_for_gateway_order($id);
-                $this->log("Response from server on getting getway order".print_r($response,true));
-                if (isset($response->id)) {
-                    return array('result' => 'success', 'payment_list' => $response);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate(['id' => $id])) {
+                    $this->log('Data sent for getting checkout options for gateway order');
+                    $response = $this->get_instamojo_api()->get_checkout_options_for_gateway_order($id);
+                    $this->log("Response from server on getting getway order".print_r($response,true));
+                    if (isset($response->payment_options)) {
+                        return array('status' => 'success', 'response' => $response);
+                    }
+                    return array('status' => 'error', 'response' => $response);
                 }
-
-                return array('result' => 'error', 'message' => $response);
+                return array('status' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {
@@ -212,11 +247,12 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
         public function init_settings()
         {
             parent::init_settings();
-            $this->title          = $this->get_option( 'title' );
-            $this->description    = $this->get_option( 'description' );
-            $this->testmode       = 'yes' === $this->get_option( 'testmode', 'no' );
-            $this->client_id      = $this->get_option( 'client_id' );
-            $this->client_secret  = $this->get_option( 'client_secret' );
+            $this->title = $this->get_option('title');
+            $this->description = $this->get_option('description');
+            $this->testmode = 'yes' === $this->get_option('testmode', 'no');
+            $this->client_id = $this->get_option('client_id');
+            $this->client_secret = $this->get_option('client_secret');
+            $this->validator = new Validator();
         }
 
         public function init_form_fields()
