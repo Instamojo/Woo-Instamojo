@@ -37,16 +37,15 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	public function process_payment($order_id)
 	{
             $this->log("Creating Instamojo Order for order id: $order_id");
-            $order = new WC_Order($orderId);
+            $order = new WC_Order($order_id);
 
             try{
                 $api_data['buyer_name'] = $this->encode_string_data(trim($order->billing_first_name .' '.$order->billing_last_name, ENT_QUOTES), 20);
                 $api_data['email'] = substr($order->billing_email, 0, 75);
                 $api_data['phone'] = $this->encode_string_data($order->billing_phone, 20);
                 $api_data['amount'] = $this->get_order_total();
-                $api_data['currency'] = self::DEFAULT_CURRENCY;
                 $api_data['redirect_url'] = get_site_url();
-                $api_data['purpose'] = self::PURPOSE_FIRLD_PREFIX . $orderId;
+                $api_data['purpose'] = self::PURPOSE_FIRLD_PREFIX . $order_id;
                 $api_data['send_email'] = 'True';
                 $api_data['send_sms'] = 'True';
                 if (!$this->is_localhost()) {
