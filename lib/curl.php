@@ -21,7 +21,7 @@ class Curl
 	{
 		 $this->ch = curl_init();
 		 $this->cookie_file = dirname(__FILE__)."/cookie.txt";
-		 $this->useragent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36";
+		 $this->useragent = $this->getHttpUserAgent();
 	}
 	
 	public function debug($bool)
@@ -109,7 +109,6 @@ class Curl
 	private function execute()
 	{
 		$tuData = curl_exec($this->ch);
-
 		$error_number = curl_errno($this->ch);
         $error_message = curl_error($this->ch);
 
@@ -173,4 +172,9 @@ class Curl
 				"with Response Code:".$this->responseCode;
 		
 	}
+
+        private function getHttpUserAgent()
+        {
+            return $_SERVER['HTTP_USER_AGENT'];
+        }
 }
