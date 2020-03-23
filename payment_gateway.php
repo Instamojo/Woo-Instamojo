@@ -174,7 +174,7 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                 $api_data['transaction_id'] = self::PURPOSE_FIRLD_PREFIX.$order_id;
                 $api_data['redirect_url'] = get_site_url();
                 $this->validator->set_validation_type(__FUNCTION__);
-                if($this->validator->validate(['order_id' => $order_id], $api_data)) {
+                if($this->validator->validate([], $api_data)) {
                     $this->log('Data sent for initiate gateway order' .  print_r($api_data));
                     $response = $this->get_instamojo_api()->initiate_gateway_order($api_data);
                     $this->log("Response from server on initiate gateway order" . print_r($response, true));

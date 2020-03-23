@@ -53,8 +53,7 @@ class ValidationRules {
                                                              'amount' => [ 'DATA_TYPE'=> 'amount', 'REQUIRED' => true],
                                                              'transaction_id' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true],
                                                              'currency' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true, 'DATA_IN' => ['INR']],
-                                                             'redirect_url' => [ 'DATA_TYPE'=> 'url', 'REQUIRED' => true],
-                                                             'order_id' => [ 'DATA_TYPE'=> 'integer', 'REQUIRED' => true]];
+                                                             'redirect_url' => [ 'DATA_TYPE'=> 'url', 'REQUIRED' => true]];
     }
     
     public function get_validation_rule($api_type)
