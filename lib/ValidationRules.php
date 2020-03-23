@@ -11,6 +11,18 @@ class ValidationRules {
     
     private function init_validation_rules()
     {
+        $this->validation_rules['process_payment'] = ['buyer_name' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true],
+                                                    'email' => [ 'DATA_TYPE'=> 'email', 'REQUIRED' => false],
+                                                    'phone' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => false],
+                                                    'amount' => [ 'DATA_TYPE'=> 'amount', 'REQUIRED' => true],
+                                                    'redirect_url' => [ 'DATA_TYPE'=> 'url', 'REQUIRED' => true],
+                                                    'webhook' => [ 'DATA_TYPE'=> 'url', 'REQUIRED' => true],
+                                                    'purpose' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true],
+                                                    'send_email' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true, 'DATA_IN' => ['True', 'False']],
+                                                    'send_sms' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true, 'DATA_IN' => ['True', 'False']],
+                                                    'webhook' => [ 'DATA_TYPE'=> 'url', 'REQUIRED' => false],
+                                                    'allow_repeated_payments' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => false], 'DATA_IN' => ['True', 'False']];
+
         $this->validation_rules['get_payment_details'] = ['payment_id' => [ 'DATA_TYPE'=> 'string', 'REQUIRED' => true]];
         
         $this->validation_rules['create_refund'] = ['type' => ['DATA_TYPE'=> 'string', 'REQUIRED' => true , 'DATA_IN' => ['RFD', 'TNR', 'QFL', 'QNR', 'EWN', 'TAN', 'PTH']],

@@ -15,7 +15,6 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
 	private $client_secret;
         private $localhost_list = array('127.0.0.1', '::1');
 	private $instamojo_api = null;
-        private $valid_refund_types = ['RFD', 'TNR', 'QFL', 'QNR', 'EWN', 'TAN', 'PTH'];
         private $validator = null;
         
         private const DEFAULT_CURRENCY = 'INR'; 
@@ -52,13 +51,17 @@ Class WP_Gateway_Instamojo extends WC_Payment_Gateway {
                     $api_data['webhook'] = get_site_url();
                 }
                 $api_data['allow_repeated_payments'] = 'False';
-                $this->log("Data sent for creating order ".print_r($api_data,true));
-                $response = $this->get_instamojo_api()->create_payment_request($api_data);
-                $this->log("Response from server on creating payment request".print_r($response,true));
-                if (isset($response->id)) {
-                    WC()->session->set( 'payment_request_id',  $response->id);
-                    return array('status' => 'success', 'redirect' => $response->longurl);
+                $this->validator->set_validation_type(__FUNCTION__);
+                if($this->validator->validate([], $api_data)) {
+                    $this->log("Data sent for creating order ".print_r($api_data,true));
+                    $response = $this->get_instamojo_api()->create_payment_request($api_data);
+                    $this->log("Response from server on creating payment request".print_r($response,true));
+                    if (isset($response->id)) {
+                        WC()->session->set( 'payment_request_id',  $response->id);
+                        return array('result' => 'success', 'redirect' => $response->longurl);
+                    }
                 }
+                return array('result' => 'error', 'response' => $this->validator->get_validation_errors());
             } catch(CurlException $e) {
                 $this->handle_curl_exception($e);
             } catch(ValidationException $e) {

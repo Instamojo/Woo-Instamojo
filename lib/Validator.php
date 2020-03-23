@@ -64,7 +64,6 @@ class Validator {
                 return false;
             }
 
-            $this->is_all_fields_present($data_to_validate, $validation_rules);
             $validation_rules_field_name = array_keys($validation_rules);
             foreach ($validation_rules as $field_name => $validation_rule) {
                 if (!$this->is_field_present($field_name, $validation_rules_field_name)) continue;
@@ -79,16 +78,7 @@ class Validator {
 
             return count($this->error) ? false : true;
         }
-        
-        private function is_all_fields_present($data_to_validate, $validation_rules)
-        {
-            if (count($data_to_validate) !== count($validation_rules)) {
-                $this->set_error('Missing fields: '. implode(',', array_diff(array_keys($validation_rules), array_keys($data_to_validate))));
-            
-                return false;
-            }
-        }
-        
+
         private function is_field_present($field_name, $validation_rules_fields)
         {
             if (!in_array($field_name, $validation_rules_fields)) {
@@ -109,6 +99,14 @@ class Validator {
                     if (gettype($field_value) !== $data_type) {
                         $this->set_error('Invalid data type, expected data type is: '.$data_type, $field_name);
                         
+                        return false;
+                    }
+                    break;
+
+                case 'boolean' :
+                    if (gettype($field_value) !== $data_type) {
+                        $this->set_error('Invalid data type, expected data type is: '.$data_type, $field_name);
+
                         return false;
                     }
                     break;

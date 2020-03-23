@@ -46,7 +46,7 @@ add_action( 'admin_notices', 'woocommerce_required_admin_notice' );
 	# register our GET variables
 	function add_query_vars_filter( $vars ){
 	  $vars[] = "payment_id";
-	  $vars[] = "id";
+	  $vars[] = "payment_request_id";
 	  return $vars;
 	}
 	add_filter( 'query_vars', 'add_query_vars_filter' );
@@ -61,9 +61,9 @@ add_action( 'admin_notices', 'woocommerce_required_admin_notice' );
 	# look for redirect from instamojo.
 	add_action( 'template_redirect', 'init_instamojo_payment_gateway1' );
 	function init_instamojo_payment_gateway1(){
-		if(get_query_var("payment_id") and get_query_var("id")){
+		if(get_query_var("payment_id") and get_query_var("payment_request_id")){
 			$payment_id = get_query_var("payment_id");
-			$payment_request_id = get_query_var("id");
+			$payment_request_id = get_query_var("payment_request_id");
 			include_once "payment_confirm.php";
 		}
 	}
